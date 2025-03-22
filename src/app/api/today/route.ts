@@ -9,7 +9,6 @@ type CalendarEvent = {
   };
 };
 
-
 export async function GET(req: NextRequest) {
   const calendar = await getGoogleCalendarClientFromRefreshToken();
 
@@ -27,9 +26,15 @@ export async function GET(req: NextRequest) {
     orderBy: 'startTime',
   });
 
+  const formatter = new Intl.DateTimeFormat('de-CH', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Zurich',
+  });
+
   const events = (res.data.items || []).map((event: CalendarEvent) => ({
     summary: event.summary || 'Kein Titel',
-    start: event.start?.dateTime || event.start?.date || '',
+    start: formatter.format(new Date(event.start?.dateTime || event.start?.date || '')),
   }));
 
   return NextResponse.json({ events });

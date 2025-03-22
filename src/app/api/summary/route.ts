@@ -5,10 +5,10 @@ import { NextRequest, NextResponse } from 'next/server';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 type CalendarEvent = {
-  summary?: string;
+  summary?: string | null;
   start?: {
-    dateTime?: string;
-    date?: string;
+    dateTime?: string | null;
+    date?: string | null;
   };
 };
 
@@ -31,9 +31,15 @@ export async function GET(req: NextRequest) {
 
   const events = (res.data.items || []).slice(0, 7) as CalendarEvent[];
 
+  const formatter = new Intl.DateTimeFormat('de-CH', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Zurich',
+  });
+
   const textList = events.map((e) => {
-    const start = e.start?.dateTime || e.start?.date || '';
-    const time = start ? new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+    const rawStart = e.start?.dateTime || e.start?.date || '';
+    const time = rawStart ? formatter.format(new Date(rawStart)) : '';
     return `- ${time} ${e.summary}`;
   }).join('\n');
 
