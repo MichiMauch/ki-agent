@@ -1,5 +1,11 @@
-import NextAuth from 'next-auth';
+import NextAuth from 'next-auth/next';
 import GoogleProvider from 'next-auth/providers/google';
+
+declare module 'next-auth' {
+  interface Session {
+    accessToken?: string;
+  }
+}
 
 const handler = NextAuth({
   providers: [
