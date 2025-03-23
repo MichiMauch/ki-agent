@@ -61,8 +61,8 @@ Fasse das Ganze in einem einzigen, kurzen Satz zusammen.
   await resend.emails.send({
     from: process.env.EMAIL_FROM!,
     to: process.env.EMAIL_TO!,
-    subject: `Dein Tagesüberblick – ${date.toLocaleDateString('de-CH')}`,
-    text: `🧠 Dein Tag in einem Satz:\n\n"${summary}"\n\n📅 Termine:\n${textList}`,
+    subject: `Mein Tag – ${date.toLocaleDateString('de-CH')}`,
+    text: `🧠 Mein Tag in einem Satz:\n\n"${summary}"\n\n📅 Termine:\n${textList}`,
   });
 
   return NextResponse.json({ status: 'sent', summary });

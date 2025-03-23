@@ -1,6 +1,13 @@
 {
-    "crons": [{
-      "path": "/api/cron",
-      "schedule": "0 7 * * *"
-    }]
+    "crons": [
+      {
+        "path": "/api/cron",
+        "schedule": "0 6 * * *"
+      },
+      {
+        "path": "/api/create-rtm-todos?offset=3",
+        "schedule": "0 6 * * *"
+      }
+    ]
   }
+  
