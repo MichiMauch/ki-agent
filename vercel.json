@@ -5,7 +5,7 @@
         "schedule": "0 6 * * *"
       },
       {
-        "path": "/api/create-rtm-todos?offset=3",
+        "path": "/api/cron-todos-offset-3",
         "schedule": "0 6 * * *"
       }
     ]
