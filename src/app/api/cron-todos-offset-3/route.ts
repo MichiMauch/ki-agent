@@ -6,12 +6,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
+  const url = `${process.env.NEXTAUTH_URL}/api/create-rtm-todos?offset=3`;
   const headers = {
     Authorization: `Bearer ${process.env.CRON_SECRET}`,
   };
 
-  // Fire & Forget – löst die lange Funktion aus, aber wartet nicht
-  fetch(`${process.env.NEXTAUTH_URL}/api/create-rtm-todos?offset=3`, { headers }).catch(console.error);
+  console.log('🟡 Triggering:', url);
 
-  return NextResponse.json({ triggered: true, note: 'offset 3 gestartet' });
+  try {
+    const res = await fetch(url, { headers });
+    const data = await res.json();
+    console.log('✅ Response von /create-rtm-todos:', JSON.stringify(data, null, 2));
+    return NextResponse.json({ triggered: true, data });
+  } catch (error) {
+    console.error('❌ Fehler beim Aufruf von /create-rtm-todos:', error);
+    return new NextResponse('Fehler beim Triggern', { status: 500 });
+  }
 }
