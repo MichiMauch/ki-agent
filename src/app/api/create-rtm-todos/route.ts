@@ -14,6 +14,12 @@ type CalendarEvent = {
 };
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  // 🔐 CRON-Sicherheitscheck
+  const authHeader = req.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
   const offset = parseInt(req.nextUrl.searchParams.get('offset') || '0', 10);
   const calendar = await getGoogleCalendarClientFromRefreshToken();
 
@@ -38,7 +44,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const summary = event.summary || 'Ohne Titel';
     const rawStart = event.start?.dateTime || event.start?.date || '';
     const dateObj = new Date(rawStart);
-    const time = dateObj.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+    const time = dateObj.toLocaleTimeString('de-CH', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
     const dateStr = dateObj.toISOString().split('T')[0];
 
     return {
@@ -76,7 +85,9 @@ Gib nur die To-dos aus, keine Kommentare.
   const created = await Promise.all(
     todos.map(async (todo) => {
       const content = todo.replace(/^[-•]\s*/, '');
-      const matchingTermin = termindaten.find((t) => content.startsWith(t.summary));
+      const matchingTermin = termindaten.find((t) =>
+        content.startsWith(t.summary)
+      );
       const due = matchingTermin?.date || selectedDate.toISOString().split('T')[0];
       return createTask(content, due, timeline);
     })
@@ -86,7 +97,11 @@ Gib nur die To-dos aus, keine Kommentare.
 }
 
 // ➕ Aufgabe anlegen (inkl. due setzen)
-async function createTask(name: string, due: string, timeline: string): Promise<{ name: string; due: string; result: string }> {
+async function createTask(
+  name: string,
+  due: string,
+  timeline: string
+): Promise<{ name: string; due: string; result: string }> {
   const url = `https://api.rememberthemilk.com/services/rest/`;
   const method = 'rtm.tasks.add';
 
@@ -109,7 +124,9 @@ async function createTask(name: string, due: string, timeline: string): Promise<
   const taskSeries = Array.isArray(data.rsp.list.taskseries)
     ? data.rsp.list.taskseries[0]
     : data.rsp.list.taskseries;
-  const task = Array.isArray(taskSeries.task) ? taskSeries.task[0] : taskSeries.task;
+  const task = Array.isArray(taskSeries.task)
+    ? taskSeries.task[0]
+    : taskSeries.task;
 
   const setDueResult = await setDueDate(
     data.rsp.list.id,
@@ -145,7 +162,9 @@ async function setDueDate(
   const api_sig = sign(params);
   const searchParams = new URLSearchParams({ ...params, api_sig });
 
-  const res = await fetch(`https://api.rememberthemilk.com/services/rest/?${searchParams.toString()}`);
+  const res = await fetch(
+    `https://api.rememberthemilk.com/services/rest/?${searchParams.toString()}`
+  );
   const data = await res.json();
 
   return data.rsp?.stat || 'unknown';
@@ -162,7 +181,9 @@ async function getTimeline(): Promise<string> {
   const api_sig = sign(params);
   const searchParams = new URLSearchParams({ ...params, api_sig });
 
-  const res = await fetch(`https://api.rememberthemilk.com/services/rest/?${searchParams.toString()}`);
+  const res = await fetch(
+    `https://api.rememberthemilk.com/services/rest/?${searchParams.toString()}`
+  );
   const data = await res.json();
   return data.rsp.timeline;
 }
