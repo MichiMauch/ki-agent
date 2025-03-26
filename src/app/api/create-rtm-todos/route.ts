@@ -74,20 +74,37 @@ Gib nur die To-dos aus, keine Kommentare.
   const todos = todoText
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line.startsWith('-'));
+    .filter((line) => line.startsWith('-'))
+    .map((line) => {
+      const name = line.replace(/^[-•]\s*/, '');
+      const matchingTermin = termindaten.find((t) => name.startsWith(t.summary));
+      const due = matchingTermin?.date || selectedDate.toISOString().split('T')[0];
+      return { name, due };
+    });
+
+  return NextResponse.json({ offset, todos });
+}
+
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  const auth = req.headers.get("Authorization");
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  const body = await req.json();
+  const todos: { name: string; due: string }[] = body.todos;
+
+  if (!Array.isArray(todos) || todos.length === 0) {
+    return NextResponse.json({ status: "no-todos" });
+  }
 
   const timeline = await getTimeline();
 
   const created = await Promise.all(
-    todos.map(async (todo) => {
-      const content = todo.replace(/^[-•]\s*/, '');
-      const matchingTermin = termindaten.find((t) => content.startsWith(t.summary));
-      const due = matchingTermin?.date || selectedDate.toISOString().split('T')[0];
-      return createTask(content, due, timeline);
-    })
+    todos.map((todo) => createTask(todo.name, todo.due, timeline))
   );
 
-  return NextResponse.json({ offset, created, count: created.length });
+  return NextResponse.json({ created, count: created.length });
 }
 
 async function createTask(name: string, due: string, timeline: string): Promise<{ name: string; due: string; result: string }> {

@@ -7,6 +7,7 @@ type CalendarEvent = {
     dateTime?: string | null;
     date?: string | null;
   };
+  location?: string | null; // 👈 Ort hinzufügen
 };
 
 export async function GET(req: NextRequest) {
@@ -26,15 +27,10 @@ export async function GET(req: NextRequest) {
     orderBy: 'startTime',
   });
 
-  const formatter = new Intl.DateTimeFormat('de-CH', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Europe/Zurich',
-  });
-
   const events = (res.data.items || []).map((event: CalendarEvent) => ({
     summary: event.summary || 'Kein Titel',
-    start: formatter.format(new Date(event.start?.dateTime || event.start?.date || '')),
+    start: event.start?.dateTime || event.start?.date || null,
+    location: event.location || null, // 👈 Ort hinzufügen
   }));
 
   return NextResponse.json({ events });

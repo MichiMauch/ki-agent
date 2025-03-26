@@ -63,11 +63,22 @@ Fasse das Ganze in einem einzigen, kurzen Satz zusammen.
 
   const summary = completion.choices[0]?.message?.content?.trim() || 'Heute ist ein entspannter Tag.';
 
+  const tasks = [
+    "Überlege dir, in welchen Bereichen du dich verbessert hast und welche Ziele du erreicht hast. Bereite Beispiele vor, um diese Punkte zu untermauern.",
+    "Entscheide, was du für zukünftige Ziele in deinem Job hast und wie du planst, diese zu erreichen.",
+    "Sammle alle relevanten Dokumente und Informationen, die für den Anruf erforderlich sind.",
+    "Fasse die Schlüsselprobleme oder -fragen zusammen, die du während des Anrufs ansprechen möchtest.",
+    "Bereite dich auf eine Präsentation deiner Designideen vor.",
+    "Sammle Feedback oder Bemerkungen zu früheren Projekten, die für dieses Meeting relevant sein könnten."
+  ];
+
+  const tasksList = tasks.map((task, index) => `${index + 1}. ${task}`).join('\n');
+
   await resend.emails.send({
     from: process.env.EMAIL_FROM!,
     to: process.env.EMAIL_TO!,
     subject: `Mein Tag – ${date.toLocaleDateString('de-CH')}`,
-    text: `🧠 Mein Tag in einem Satz:\n\n"${summary}"\n\n📅 Termine:\n${textList}`,
+    text: `🧠 Mein Tag in einem Satz:\n\n"${summary}"\n\n📅 Termine:\n${textList}\n\n📝 Aufgaben:\n${tasksList}`,
   });
 
   return NextResponse.json({ status: 'sent', summary });
