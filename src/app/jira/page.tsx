@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+import Kalenderwoche from "@/components/Kalenderwoche";
+import TaskCard from "@/components/TaskCard";
+import SummaryBlock from "@/components/SummaryBlock";
 
 type Task = {
   id: string;
@@ -12,6 +15,7 @@ type Task = {
   lastStatusChange: string | null;
   lastStatusFrom: string | null;
   lastStatusTo: string | null;
+  sprint: string | null;
 };
 
 export default function JiraPage() {
@@ -21,17 +25,20 @@ export default function JiraPage() {
   const [summary, setSummary] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
 
-  const summaryRef = useRef<HTMLDivElement>(null);
+  const [completing, setCompleting] = useState(false);
 
-  const copyHtmlToClipboard = () => {
-    if (summaryRef.current) {
-      const html = summaryRef.current.innerHTML;
-      navigator.clipboard.write([
-        new ClipboardItem({
-          "text/html": new Blob([html], { type: "text/html" }),
-        }),
-      ]);
-    }
+  // Removed unused copyHtmlToClipboard function to resolve the error.
+
+  const showToast = (message: string) => {
+    const toast = document.createElement("div");
+    toast.textContent = message;
+    toast.className =
+      "fixed bottom-6 right-6 bg-black text-white text-sm px-4 py-2 rounded shadow z-50 animate-fade-in-out";
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
   };
 
   // Hole Tasks
@@ -80,106 +87,98 @@ export default function JiraPage() {
     generateSummary();
   }, [tasks]);
 
-  if (loading) return <p>Lade deine Jira-Tasks...</p>;
+  if (loading)
+    return (
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <h1 className="text-2xl font-bold">
+          Projekt: economiesuisse.ch Relaunch (<Kalenderwoche />)
+        </h1>
+
+        <div className="flex gap-2">
+          <button
+            disabled={completing}
+            onClick={async () => {
+              setCompleting(true);
+              const keys = tasks.map((t) => t.key);
+              const res = await fetch("/api/jira-complete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ taskKeys: keys }),
+              });
+              await res.json();
+
+              showToast("✅ Tasks wurden verschoben");
+              setCompleting(false);
+            }}
+            className={`text-sm px-3 py-1 rounded transition ${
+              completing
+                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                : "bg-green-600 text-white hover:bg-green-700"
+            }`}
+          >
+            {completing
+              ? "⏳ Wird verschoben…"
+              : "✅ Tasks als erledigt markieren"}
+          </button>
+        </div>
+      </div>
+    );
+
   if (error) return <p className="text-red-600">Fehler: {error}</p>;
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">
-        Projekt: economiesuisse.ch Relaunch
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">
+          Projekt: economiesuisse.ch Relaunch (<Kalenderwoche />)
+        </h1>
+
+        <div className="flex gap-2">
+          <button
+            disabled={completing}
+            onClick={async () => {
+              setCompleting(true);
+              const keys = tasks.map((t) => t.key);
+              const res = await fetch("/api/jira-complete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ taskKeys: keys }),
+              });
+              await res.json();
+
+              showToast("✅ Tasks wurden verschoben");
+              setCompleting(false);
+            }}
+            className={`text-sm px-3 py-1 rounded transition ${
+              completing
+                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                : "bg-green-600 text-white hover:bg-green-700"
+            }`}
+          >
+            {completing
+              ? "⏳ Wird verschoben…"
+              : "✅ Tasks als erledigt markieren"}
+          </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Linke Spalte – Tasks */}
         <div>
           <ul className="space-y-4">
             {tasks.map((task) => (
-              <li key={task.id} className="p-4 border rounded-lg shadow-sm">
-                <div className="font-semibold">{task.key}</div>
-                <div>{task.summary}</div>
-                <div className="text-sm text-gray-500">
-                  Status: {task.status}
-                </div>
-                <div className="text-sm text-gray-500">
-                  Zugewiesen an: {task.assignee}
-                </div>
-                {task.due && (
-                  <div className="text-sm text-gray-400">
-                    Fällig am: {new Date(task.due).toLocaleDateString("de-CH")}
-                  </div>
-                )}
-                {task.lastStatusChange && (
-                  <div className="text-sm text-gray-400">
-                    Von <span className="italic">{task.lastStatusFrom}</span> →{" "}
-                    <span className="italic">{task.lastStatusTo}</span> am{" "}
-                    {new Date(task.lastStatusChange).toLocaleString("de-CH", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
-                )}
-              </li>
+              <TaskCard key={task.id} task={task} />
             ))}
           </ul>
         </div>
 
         {/* Rechte Spalte – Zusammenfassung */}
-        <div>
-          {generating ? (
-            <p className="text-gray-500 italic">
-              Zusammenfassung wird erstellt…
-            </p>
-          ) : summary ? (
-            <>
-              <div className="flex justify-between items-center mb-3">
-                <h2 className="text-xl font-semibold">
-                  Projektstatus für Kunden
-                </h2>
-                <button
-                  onClick={copyHtmlToClipboard}
-                  className="text-sm px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 transition"
-                >
-                  📋 HTML in Zwischenablage kopieren
-                </button>
-              </div>
-
-              <div
-                ref={summaryRef}
-                className="bg-gray-50 p-6 border border-gray-200 rounded-lg shadow-sm text-sm font-sans text-gray-800 leading-relaxed space-y-4"
-              >
-                <h1 className="text-lg font-bold mb-2">
-                  Projektupdate der aktuellen Woche.
-                </h1>
-
-                <div
-                  className="space-y-3"
-                  dangerouslySetInnerHTML={{ __html: summary || "" }}
-                />
-
-                <div className="border-t pt-4">
-                  <div className="font-semibold mb-2">Erledigte Tasks:</div>
-                  <ul className="list-disc list-inside space-y-1">
-                    {tasks.map((task) => (
-                      <li
-                        key={task.id}
-                        className="p-4 border border-gray-200 rounded-lg shadow-sm bg-white space-y-1"
-                      >
-                        <strong>{task.key}</strong> – {task.summary}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </>
-          ) : (
-            <p className="text-gray-500 italic">
-              Keine Zusammenfassung verfügbar.
-            </p>
-          )}
-        </div>
+        <SummaryBlock
+          summary={summary}
+          tasks={tasks}
+          generating={generating}
+          onCopy={() => showToast("📋 HTML wurde kopiert")}
+        />
       </div>
     </div>
   );

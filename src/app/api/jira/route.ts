@@ -6,7 +6,7 @@ const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN!
 
 export async function GET() {
   const jql = `project = ECO2025 AND status in ("Ready to Review", "Ready to Deploy", "Release Notes")`
-  const url = `${JIRA_DOMAIN}/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=100&fields=summary,status,assignee,duedate&expand=changelog`
+  const url = `${JIRA_DOMAIN}/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=100&fields=summary,status,duedate,assignee,customfield_10401&expand=changelog`
 
   const auth = Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString('base64')
 
@@ -23,6 +23,15 @@ export async function GET() {
   }
 
   const data = await res.json()
+  console.log("🔍 Beispiel-Issue-Felder:", data.issues?.[0]?.fields);
+  console.log("🔑 Alle Felder:", Object.keys(data.issues?.[0]?.fields || {}));
+  const fields = data.issues?.[0]?.fields || {};
+
+  Object.entries(fields).forEach(([key, value]) => {
+    if (key.startsWith("customfield_") && Array.isArray(value)) {
+      console.log(`🔍 ${key}:`, JSON.stringify(value, null, 2));
+    }
+  });
 
   interface JiraIssue {
     id: string;
@@ -32,6 +41,8 @@ export async function GET() {
       status: { name: string };
       assignee?: { displayName: string };
       duedate?: string;
+      customfield_10020?: Array<{ name: string }>;
+      customfield_10401?: Array<{ name: string }>;
     };
     changelog?: {
       histories: Array<{
@@ -69,7 +80,8 @@ export async function GET() {
       due: issue.fields.duedate || null,
       lastStatusChange: lastStatusChange?.changed || null,
       lastStatusFrom: lastStatusChange?.from || null,
-      lastStatusTo: lastStatusChange?.to || null,
+      sprint: issue.fields.customfield_10020?.[0]?.name || issue.fields.customfield_10401?.[0]?.name || null,
+
 
     }
   })
