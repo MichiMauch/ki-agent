@@ -70,7 +70,7 @@ export default function JiraPage() {
         });
         const data = await res.json();
         setSummary(data.summary);
-      } catch (err) {
+      } catch {
         setSummary("Fehler beim Erzeugen der Zusammenfassung.");
       } finally {
         setGenerating(false);

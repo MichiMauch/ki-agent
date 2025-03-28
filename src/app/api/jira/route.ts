@@ -24,14 +24,35 @@ export async function GET() {
 
   const data = await res.json()
 
-  const tasks = data.issues.map((issue: any) => {
+  interface JiraIssue {
+    id: string;
+    key: string;
+    fields: {
+      summary: string;
+      status: { name: string };
+      assignee?: { displayName: string };
+      duedate?: string;
+    };
+    changelog?: {
+      histories: Array<{
+        created: string;
+        items: Array<{
+          field: string;
+          fromString?: string;
+          toString?: string;
+        }>;
+      }>;
+    };
+  }
+
+  const tasks = data.issues.map((issue: JiraIssue) => {
     const history = issue.changelog?.histories || []
 
     const lastStatusChange = history
-      .flatMap((h: any) =>
+      .flatMap((h: { created: string; items: Array<{ field: string; fromString?: string; toString?: string }> }) =>
         h.items
-          .filter((item: any) => item.field === 'status')
-          .map((item: any) => ({
+          .filter((item) => item.field === 'status')
+          .map((item) => ({
             from: item.fromString,
             to: item.toString,
             changed: h.created,

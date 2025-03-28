@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   }
 
   const summaries = tasks.map(
-    (t: any) =>
+    (t: { summary: string; lastStatusFrom: string; lastStatusTo: string; lastStatusChange: string }) =>
       `"${t.summary}" (von ${t.lastStatusFrom} zu ${t.lastStatusTo} am ${new Date(
         t.lastStatusChange
       ).toLocaleDateString("de-CH")})`
