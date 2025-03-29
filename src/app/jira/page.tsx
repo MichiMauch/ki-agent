@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Kalenderwoche from "@/components/Kalenderwoche";
 import TaskCard from "@/components/TaskCard";
 import SummaryBlock from "@/components/SummaryBlock";
+import TimeTracking from "@/components/TimeTracking";
+import ProjectInfoBlock from "@/components/ProjectInfoBlock";
 
 type Task = {
   id: string;
@@ -24,10 +26,8 @@ export default function JiraPage() {
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-
+  const [projectNames, setProjectNames] = useState<string[]>([]);
   const [completing, setCompleting] = useState(false);
-
-  // Removed unused copyHtmlToClipboard function to resolve the error.
 
   const showToast = (message: string) => {
     const toast = document.createElement("div");
@@ -35,32 +35,44 @@ export default function JiraPage() {
     toast.className =
       "fixed bottom-6 right-6 bg-black text-white text-sm px-4 py-2 rounded shadow z-50 animate-fade-in-out";
     document.body.appendChild(toast);
-
-    setTimeout(() => {
-      toast.remove();
-    }, 3000);
+    setTimeout(() => toast.remove(), 3000);
   };
 
-  // Hole Tasks
+  // Tasks & Projekte holen
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchTasksAndProjects = async () => {
       try {
         const res = await fetch("/api/jira");
         if (!res.ok) throw new Error("Fehler beim Laden der Tasks");
         const data = await res.json();
         setTasks(data.tasks);
+
+        // Projekte aus Zeiterfassung holen
+        const timeRes = await fetch("/api/moco-time", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tasks: data.tasks }),
+        });
+        const timeData = await timeRes.json();
+        const entries = timeData.entries || [];
+
+        const uniqueProjects = Array.from(
+          new Set(
+            entries
+              .map((e: { project: string | null }) => e.project)
+              .filter(Boolean)
+          )
+        ) as string[];
+        setProjectNames(uniqueProjects);
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Unbekannter Fehler");
-        }
+        if (err instanceof Error) setError(err.message);
+        else setError("Unbekannter Fehler");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTasks();
+    fetchTasksAndProjects();
   }, []);
 
   // GPT-Zusammenfassung generieren
@@ -87,42 +99,23 @@ export default function JiraPage() {
     generateSummary();
   }, [tasks]);
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold">
           Projekt: economiesuisse.ch Relaunch (<Kalenderwoche />)
         </h1>
-
         <div className="flex gap-2">
           <button
-            disabled={completing}
-            onClick={async () => {
-              setCompleting(true);
-              const keys = tasks.map((t) => t.key);
-              const res = await fetch("/api/jira-complete", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ taskKeys: keys }),
-              });
-              await res.json();
-
-              showToast("✅ Tasks wurden verschoben");
-              setCompleting(false);
-            }}
-            className={`text-sm px-3 py-1 rounded transition ${
-              completing
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-green-600 text-white hover:bg-green-700"
-            }`}
+            disabled
+            className="text-sm px-3 py-1 rounded bg-gray-300 text-gray-600 cursor-not-allowed"
           >
-            {completing
-              ? "⏳ Wird verschoben…"
-              : "✅ Tasks als erledigt markieren"}
+            ⏳ Wird verschoben…
           </button>
         </div>
       </div>
     );
+  }
 
   if (error) return <p className="text-red-600">Fehler: {error}</p>;
 
@@ -145,7 +138,6 @@ export default function JiraPage() {
                 body: JSON.stringify({ taskKeys: keys }),
               });
               await res.json();
-
               showToast("✅ Tasks wurden verschoben");
               setCompleting(false);
             }}
@@ -170,6 +162,15 @@ export default function JiraPage() {
               <TaskCard key={task.id} task={task} />
             ))}
           </ul>
+
+          <TimeTracking tasks={tasks} />
+
+          {/* Dynamische Projektinfo-Blöcke */}
+          <div className="mt-8 space-y-4">
+            {projectNames.map((name) => (
+              <ProjectInfoBlock key={name} projectName={name} />
+            ))}
+          </div>
         </div>
 
         {/* Rechte Spalte – Zusammenfassung */}

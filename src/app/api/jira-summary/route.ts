@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
   const prompt = `
 Fasse die folgenden Jira-Tasks als sachlichen Projektstatus für einen Kunden zusammen.
-Keine Aufzählung. Keine Einleitung. Keine Übertreibungen.
+Keine Aufzählung. Keine Einleitung. Keine Übertreibungen. Verwende immer die Schweizer Tastatur.
 
 Aufgaben diese Woche:
 ${summaries.join("\n")}
