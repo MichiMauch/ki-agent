@@ -20,12 +20,22 @@ export async function POST(req: Request) {
   )
 
   const prompt = `
-Fasse die folgenden Jira-Tasks als sachlichen Projektstatus für einen Kunden zusammen.
-Keine Aufzählung. Keine Einleitung. Keine Übertreibungen. Verwende immer die Schweizer Tastatur.
+  Fasse die folgenden Jira-Tasks in einem sachlichen Projektstatusbericht für einen Kunden zusammen. Halte dich strikt an folgende Vorgaben:
 
-Aufgaben diese Woche:
-${summaries.join("\n")}
-`.trim()
+*   **Fokus:** Beschreibe in präzisen, deutschen Sätzen *ausschließlich* die geleistete Arbeit an jedem einzelnen Task *innerhalb dieser Woche*.
+*   **Ausschluss:** Vermeide jegliche Angaben über Statusänderungen (z.B. "von 'In Bearbeitung' zu 'Erledigt'"), deren Bedeutung oder jegliche Interpretation des Fortschritts.
+*   **Stil:** Vermeide Floskeln, Mutmaßungen, Bewertungen und subjektive Einschätzungen. Der Bericht soll rein faktisch sein.
+*   **Sprache:** Verwende Deutsch für die Beschreibung der Arbeit. Englische Aufgabentitel dürfen beibehalten werden.
+*   **Formatierung:** Kein einleitender Satz, keine Aufzählungspunkte, keine abschließende Zusammenfassung.
+*   **Tastatur:** Verwende die Schweizer Tastatur (Layout).
+*   **Zusätzliche Präzisierung (Optional):** Beschreibe nur die **substantielle** Arbeit. Kleinere Anpassungen oder unwesentliche Tätigkeiten sind **nicht** zu berücksichtigen.
+*   **Reihenfolge (Optional):** Gib die Tasks in der Reihenfolge aus, wie sie im Originaldokument vorliegen.
+
+  
+  Aufgaben:
+  ${summaries.join("\n")}
+  `.trim();
+        
 
   const chatResponse = await openai.chat.completions.create({
     model: 'gpt-4',
