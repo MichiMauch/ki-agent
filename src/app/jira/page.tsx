@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Kalenderwoche from "@/components/Kalenderwoche";
 import TaskCard from "@/components/TaskCard";
 import SummaryBlock from "@/components/SummaryBlock";
@@ -21,6 +22,9 @@ type Task = {
 };
 
 export default function JiraPage() {
+  const searchParams = useSearchParams();
+  const projectKey = searchParams.get("project") || "ECO2025";
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,12 +46,11 @@ export default function JiraPage() {
   useEffect(() => {
     const fetchTasksAndProjects = async () => {
       try {
-        const res = await fetch("/api/jira");
+        const res = await fetch(`/api/jira?project=${projectKey}`);
         if (!res.ok) throw new Error("Fehler beim Laden der Tasks");
         const data = await res.json();
         setTasks(data.tasks);
 
-        // Projekte aus Zeiterfassung holen
         const timeRes = await fetch("/api/moco-time", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -73,19 +76,17 @@ export default function JiraPage() {
     };
 
     fetchTasksAndProjects();
-  }, []);
+  }, [projectKey]);
 
-  // GPT-Zusammenfassung generieren
   useEffect(() => {
     if (tasks.length === 0) return;
-
     const generateSummary = async () => {
       try {
         setGenerating(true);
         const res = await fetch("/api/jira-summary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tasks }),
+          body: JSON.stringify({ tasks, project: projectKey }),
         });
         const data = await res.json();
         setSummary(data.summary);
@@ -95,16 +96,15 @@ export default function JiraPage() {
         setGenerating(false);
       }
     };
-
     generateSummary();
-  }, [tasks]);
+  }, [tasks, projectKey]);
 
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">
-            Projekt: economiesuisse.ch Relaunch (<Kalenderwoche />)
+            Projekt: {projectKey} (<Kalenderwoche />)
           </h1>
           <div className="flex gap-2">
             <button
@@ -115,11 +115,8 @@ export default function JiraPage() {
             </button>
           </div>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Linke Spalte Skeletons */}
           <div className="space-y-4">
-            {/* TaskCard Skeletons */}
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
@@ -130,8 +127,6 @@ export default function JiraPage() {
                 <div className="h-3 bg-gray-100 rounded w-1/2" />
               </div>
             ))}
-
-            {/* TimeTracking Skeleton */}
             <div className="mt-6 space-y-2 animate-pulse">
               <div className="h-5 w-1/2 bg-gray-300 rounded" />
               {Array.from({ length: 2 }).map((_, i) => (
@@ -145,8 +140,6 @@ export default function JiraPage() {
                 </div>
               ))}
             </div>
-
-            {/* ProjectInfoBlock Skeleton */}
             <div className="mt-6 space-y-2 animate-pulse">
               <div className="h-5 w-1/2 bg-gray-300 rounded" />
               <div className="h-4 bg-gray-100 rounded w-3/4" />
@@ -154,8 +147,6 @@ export default function JiraPage() {
               <div className="h-4 bg-gray-100 rounded w-1/2" />
             </div>
           </div>
-
-          {/* Rechte Spalte Skeleton Summary */}
           <div className="space-y-4 animate-pulse">
             <div className="h-6 w-1/2 bg-gray-300 rounded" />
             <div className="h-4 w-full bg-gray-100 rounded" />
@@ -174,9 +165,8 @@ export default function JiraPage() {
     <div className="max-w-7xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">
-          Projekt: economiesuisse.ch Relaunch (<Kalenderwoche />)
+          Projekt: {projectKey} (<Kalenderwoche />)
         </h1>
-
         <div className="flex gap-2">
           <button
             disabled={completing}
@@ -186,7 +176,7 @@ export default function JiraPage() {
               const res = await fetch("/api/jira-complete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ taskKeys: keys }),
+                body: JSON.stringify({ taskKeys: keys, project: projectKey }),
               });
               await res.json();
               showToast("✅ Tasks wurden verschoben");
@@ -204,27 +194,20 @@ export default function JiraPage() {
           </button>
         </div>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Linke Spalte – Tasks */}
         <div>
           <ul className="space-y-4">
             {tasks.map((task) => (
               <TaskCard key={task.id} task={task} />
             ))}
           </ul>
-
           <TimeTracking tasks={tasks} />
-
-          {/* Dynamische Projektinfo-Blöcke */}
           <div className="mt-8 space-y-4">
             {projectNames.map((name) => (
               <ProjectInfoBlock key={name} projectName={name} />
             ))}
           </div>
         </div>
-
-        {/* Rechte Spalte – Zusammenfassung */}
         <SummaryBlock
           summary={summary}
           tasks={tasks}

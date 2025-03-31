@@ -6,36 +6,30 @@ const openai = new OpenAI({
 })
 
 export async function POST(req: Request) {
-  const { tasks } = await req.json()
+  const { tasks, project } = await req.json()
+  const projectKey = project || "ECO2025"
 
   if (!tasks || tasks.length === 0) {
     return NextResponse.json({ summary: 'Keine relevanten Tasks gefunden.' })
   }
 
-  const summaries = tasks.map(
-    (t: { summary: string; lastStatusFrom: string; lastStatusTo: string; lastStatusChange: string }) =>
-      `"${t.summary}" (von ${t.lastStatusFrom} zu ${t.lastStatusTo} am ${new Date(
-        t.lastStatusChange
-      ).toLocaleDateString("de-CH")})`
-  )
+  const summaries = tasks.map((t: { summary: string }) => `– ${t.summary}`)
 
   const prompt = `
-  Fasse die folgenden Jira-Tasks in einem sachlichen Projektstatusbericht für einen Kunden zusammen. Halte dich strikt an folgende Vorgaben:
+Fasse die folgenden Jira-Tasks in einem sachlichen Projektstatusbericht für den Kunden des Projekts "${projectKey}" zusammen. Halte dich strikt an folgende Vorgaben:
 
-*   **Fokus:** Beschreibe in präzisen, deutschen Sätzen *ausschließlich* die geleistete Arbeit an jedem einzelnen Task *innerhalb dieser Woche*.
-*   **Ausschluss:** Vermeide jegliche Angaben über Statusänderungen (z.B. "von 'In Bearbeitung' zu 'Erledigt'"), deren Bedeutung oder jegliche Interpretation des Fortschritts.
-*   **Stil:** Vermeide Floskeln, Mutmaßungen, Bewertungen und subjektive Einschätzungen. Der Bericht soll rein faktisch sein.
-*   **Sprache:** Verwende Deutsch für die Beschreibung der Arbeit. Englische Aufgabentitel dürfen beibehalten werden.
-*   **Formatierung:** Kein einleitender Satz, keine Aufzählungspunkte, keine abschließende Zusammenfassung.
-*   **Tastatur:** Verwende die Schweizer Tastatur (Layout).
-*   **Zusätzliche Präzisierung (Optional):** Beschreibe nur die **substantielle** Arbeit. Kleinere Anpassungen oder unwesentliche Tätigkeiten sind **nicht** zu berücksichtigen.
-*   **Reihenfolge (Optional):** Gib die Tasks in der Reihenfolge aus, wie sie im Originaldokument vorliegen.
+* **Fokus:** Beschreibe in präzisen, deutschen Sätzen *ausschliesslich* die geleistete Arbeit an jedem einzelnen Task *innerhalb dieser Woche*.
+* **Projektfokus:** Der Bericht darf **ausschliesslich Informationen zum Projekt "${projectKey}"** enthalten. Andere Projekte oder Projektnamen dürfen **nicht erwähnt** werden – auch nicht, wenn sie im Aufgabentitel stehen.
+* **Ausschluss:** Vermeide jegliche Angaben über Statusänderungen (z. B. "von 'In Bearbeitung' zu 'Erledigt'") oder Mutmassungen zur Bedeutung des Status.
+* **Stil:** Vermeide Floskeln, Mutmassungen, Bewertungen und subjektive Einschätzungen. Der Bericht soll rein faktisch und klar verständlich sein.
+* **Sprache:** Verwende Deutsch für die Beschreibung der Arbeit. Englische Aufgabentitel dürfen beibehalten werden.
+* **Formatierung:** Kein einleitender Satz, keine Aufzählungspunkte, keine abschliessende Zusammenfassung.
+* **Tastatur:** Verwende die Schweizer Tastatur (Layout).
+* **Optional:** Kleinere Anpassungen oder unwesentliche Tätigkeiten sind **nicht** zu berücksichtigen.
 
-  
-  Aufgaben:
-  ${summaries.join("\n")}
-  `.trim();
-        
+Aufgaben:
+${summaries.join("\n")}
+`.trim()
 
   const chatResponse = await openai.chat.completions.create({
     model: 'gpt-4',

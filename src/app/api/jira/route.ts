@@ -4,8 +4,11 @@ const JIRA_DOMAIN = 'https://netnode.atlassian.net'
 const JIRA_EMAIL = process.env.JIRA_EMAIL!
 const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN!
 
-export async function GET() {
-  const jql = `project = ECO2025 AND status in ("Ready to Review", "Ready to Deploy", "Release Notes")`
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const projectKey = searchParams.get("project") || "ECO2025"
+
+  const jql = `project = ${projectKey} AND status in ("Ready to Review", "Ready to Deploy", "Release Notes")`
   const url = `${JIRA_DOMAIN}/rest/api/3/search?jql=${encodeURIComponent(jql)}&maxResults=100&fields=summary,status,duedate,assignee,customfield_10401&expand=changelog`
 
   const auth = Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString('base64')
@@ -81,8 +84,6 @@ export async function GET() {
       lastStatusChange: lastStatusChange?.changed || null,
       lastStatusFrom: lastStatusChange?.from || null,
       sprint: issue.fields.customfield_10020?.[0]?.name || issue.fields.customfield_10401?.[0]?.name || null,
-
-
     }
   })
 

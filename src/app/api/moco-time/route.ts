@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   const entries: {
     user: string;
     date: string;
-    minutes: number;
+    hours: number;
     description: string;
     project?: string;
   }[] = [];
@@ -68,14 +68,14 @@ export async function POST(req: Request) {
     );
 
     for (const entry of matching) {
-        console.log("🕒 Matching entry:", {
-          user: user.name,
-          date: entry.date,
-          hours: entry.hours,
-          description: entry.description,
-          project: entry.project?.name,
-        });
-      }
+      console.log("🕒 Matching entry:", {
+        user: user.name,
+        date: entry.date,
+        hours: entry.hours,
+        description: entry.description,
+        project: entry.project?.name,
+      });
+    }
 
     entries.push(
       ...matching.map((entry: {

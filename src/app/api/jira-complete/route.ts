@@ -7,6 +7,9 @@ const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN!;
 const auth = Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString("base64");
 
 export async function POST(req: Request) {
+  // Removed unused 'searchParams' variable
+  // Removed unused 'projectKey' variable
+
   const { taskKeys } = await req.json();
 
   if (!Array.isArray(taskKeys) || taskKeys.length === 0) {
