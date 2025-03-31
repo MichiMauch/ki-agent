@@ -1,11 +1,11 @@
-// src/app/page.tsx
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { projects } from "@/lib/projects"; // neu
 
 export default function HomePage() {
   const router = useRouter();
-  const [project, setProject] = useState("ECO2025");
+  const [project, setProject] = useState(projects[0].key); // erstes Projekt vorausgewählt
 
   const handleSubmit = () => {
     router.push(`/jira?project=${project}`);
@@ -19,9 +19,11 @@ export default function HomePage() {
         value={project}
         onChange={(e) => setProject(e.target.value)}
       >
-        <option value="ECO2025">economiesuisse.ch</option>
-        <option value="PROV">Proviande</option>
-        {/* weitere Projekte hier */}
+        {projects.map((p) => (
+          <option key={p.key} value={p.key}>
+            {p.name}
+          </option>
+        ))}
       </select>
 
       <button

@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic"; // 👈 verhindert statisches Prerendering
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Kalenderwoche from "@/components/Kalenderwoche";
