@@ -77,11 +77,14 @@ export default function SummaryBlock({
 
             <div
               ref={summaryRef}
-              className="bg-white p-6 border rounded-md shadow text-sm font-sans text-gray-800 leading-relaxed space-y-4"
+              className="bg-white p-6 border rounded-md shadow text-sm font-sans text-gray-800 leading-relaxed space-y-4 prose"
             >
               <h1 className="text-lg font-bold mb-2">Projektupdate </h1>
 
-              <div dangerouslySetInnerHTML={{ __html: summary || "" }} />
+              <div
+                className="summary-content"
+                dangerouslySetInnerHTML={{ __html: summary || "" }}
+              />
 
               <div className="border-t pt-4">
                 <div className="font-semibold mb-2">Erledigte Tasks:</div>

@@ -16,20 +16,20 @@ export async function POST(req: Request) {
   const summaries = tasks.map((t: { summary: string }) => `– ${t.summary}`)
 
   const prompt = `
-Fasse die folgenden Jira-Tasks in einem sachlichen Projektstatusbericht für den Kunden des Projekts "${projectKey}" zusammen. Halte dich strikt an folgende Vorgaben:
-
-* **Fokus:** Beschreibe in präzisen, deutschen Sätzen *ausschliesslich* die geleistete Arbeit an jedem einzelnen Task *innerhalb dieser Woche*.
-* **Projektfokus:** Der Bericht darf **ausschliesslich Informationen zum Projekt "${projectKey}"** enthalten. Andere Projekte oder Projektnamen dürfen **nicht erwähnt** werden – auch nicht, wenn sie im Aufgabentitel stehen.
-* **Ausschluss:** Vermeide jegliche Angaben über Statusänderungen (z. B. "von 'In Bearbeitung' zu 'Erledigt'") oder Mutmassungen zur Bedeutung des Status.
-* **Stil:** Vermeide Floskeln, Mutmassungen, Bewertungen und subjektive Einschätzungen. Der Bericht soll rein faktisch und klar verständlich sein.
-* **Sprache:** Verwende Deutsch für die Beschreibung der Arbeit. Englische Aufgabentitel dürfen beibehalten werden.
-* **Formatierung:** Kein einleitender Satz, keine Aufzählungspunkte, keine abschliessende Zusammenfassung.
-* **Tastatur:** Verwende die Schweizer Tastatur (Layout).
-* **Optional:** Kleinere Anpassungen oder unwesentliche Tätigkeiten sind **nicht** zu berücksichtigen.
-
-Aufgaben:
-${summaries.join("\n")}
-`.trim()
+  Fasse die folgenden Jira-Tasks in einem sachlichen Projektstatusbericht für den Kunden des Projekts "${projectKey}" zusammen. Halte dich strikt an folgende Vorgaben:
+  
+  * **Format:** Gib das Ergebnis ausschliesslich als HTML zurück. Verwende <h2> oder <h3> als Abschnittstitel. Absätze sollen in <p>-Tags formatiert sein. Verwende keine Markdown-Syntax.
+  * **Struktur:** Fasse thematisch verwandte Tasks in sinnvolle Abschnitte zusammen. Jeder Abschnitt beginnt mit einem passenden Titel.
+  * **Inhalt:** Beschreibe präzise, was innerhalb dieser Woche gearbeitet wurde. Fasse Aufgaben logisch zusammen, ohne jede Aufgabe einzeln aufzulisten.
+  * **Projektfokus:** Der Bericht darf **nur Informationen zum Projekt "${projectKey}"** enthalten. Andere Projekte oder Namen dürfen **nicht erwähnt** werden – auch nicht, wenn sie im Tasktitel vorkommen.
+  * **Fokus:** Beschreibe nur substanzielle Arbeiten aus dieser Woche. Kleinere oder irrelevante Tätigkeiten weglassen.
+  * **Stil:** Keine Floskeln oder Bewertungen. Nur sachlich, informativ, klar.
+  * **Sprache:** Verwende Deutsch für die Beschreibung. Englische Tasktitel können erwähnt werden, aber nicht priorisiert.
+  * **Rechtschreibung:** Achte auf korrekte Rechtschreibung und Grammatik. Verwende keine Abkürzungen. Verwende die Schweizer Tastaturbelegung.
+  
+  Aufgaben:
+  ${summaries.join("\n")}
+  `.trim();
 
   const chatResponse = await openai.chat.completions.create({
     model: 'gpt-4',
