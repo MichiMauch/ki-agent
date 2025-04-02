@@ -25,7 +25,8 @@ export async function POST(req: Request) {
   * **Fokus:** Beschreibe nur substanzielle Arbeiten aus dieser Woche. Kleinere oder irrelevante Tätigkeiten weglassen.
   * **Stil:** Keine Floskeln oder Bewertungen. Nur sachlich, informativ, klar.
   * **Sprache:** Verwende Deutsch für die Beschreibung. Englische Tasktitel können erwähnt werden, aber nicht priorisiert.
-  * **Rechtschreibung:** Achte auf korrekte Rechtschreibung und Grammatik. Verwende keine Abkürzungen. Verwende die Schweizer Tastaturbelegung.
+  * **Rechtschreibung:** Achte auf korrekte Rechtschreibung und Grammatik. Verwende keine Abkürzungen. 
+  * **Tastatur:** Verwende nur die schweizerdeutsche Tastaturbelegung. Verwende keine Umlaute oder Sonderzeichen, die nicht auf der schweizerdeutschen Tastatur vorhanden sind.
   
   Aufgaben:
   ${summaries.join("\n")}
